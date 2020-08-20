@@ -4,9 +4,9 @@ from flask_jwt_extended import create_access_token
 from werkzeug.security import safe_str_cmp
 
 
- atributos = reqparse.RequestParser()
-        atributos.add_argument("login", type=str, required=True, help="the field 'login' cannot be left in blank")
-        atributos.add_argument("senha", type=str, required=True, help="the field 'senha' cannot be left in blank")
+atributos = reqparse.RequestParser()
+atributos.add_argument("login", type=str, required=True, help="the field 'login' cannot be left in blank")
+atributos.add_argument("senha", type=str, required=True, help="the field 'senha' cannot be left in blank")
 
 class User(Resource):
     #/usuarios/{user_id}
@@ -50,4 +50,4 @@ class UserLogin(Resource):
         if user and safe_str_cmp(user.senha, dados["senha"]):
             token_de_acesso = create_access_token(identity=user.user_id)
             return {"Access_token": token_de_acesso}, 200
-        return {"Message" : "The username or password is incorrect"}. 401 #unathorize
+        return {"Message" : "The username or password is incorrect"}, 401 #unathorize
