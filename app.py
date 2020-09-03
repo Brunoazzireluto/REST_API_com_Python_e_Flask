@@ -2,8 +2,10 @@ from flask import Flask, jsonify
 from flask_restful import Api
 from Resources.hotel import Hoteis,Hotel
 from Resources.usuario import User,User_register, UserLogin, UserLogout
+from Resources.sites import Sites, Site
 from flask_jwt_extended import JWTManager
 from blacklist import BLACKLIST
+
 
 
 
@@ -33,6 +35,9 @@ api.add_resource(User, "/usuarios/<int:user_id>")
 api.add_resource(User_register, "/cadastro")
 api.add_resource(UserLogin, "/login")
 api.add_resource(UserLogout, "/logout")
+api.add_resource(Sites, "/sites")
+api.add_resource(Site, "/sites/<string:url>")
+
 
 
 if (__name__ == "__main__"):
