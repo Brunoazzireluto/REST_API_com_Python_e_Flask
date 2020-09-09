@@ -1,6 +1,7 @@
 from flask_restful import Resource, reqparse
 from models.hotel import Hotel_model
 from flask_jwt_extended import jwt_required
+from Resources.sites import SiteModel
 import sqlite3
 from Resources.filtros import normalize_path_params,consulta_com_cidade,consulta_sem_cidade
 
@@ -40,7 +41,8 @@ class Hoteis(Resource):
             "nome" : linha[1],
             "estrelas" : linha[2],
             "diaria" : linha[3],
-            "cidade" : linha[4]
+            "cidade" : linha[4],
+            "site_id" :linha[5]
             })
 
         return {"hoteis": hoteis}
@@ -68,6 +70,9 @@ class Hotel(Resource):
 
         dados = Hotel.argumentos.parse_args()
         hotel = Hotel_model(hotel_id, **dados)
+
+        if not SiteModel.find_by_id(dados.get("site_id")):
+            return {"message" : "The Hotel must be associated to a valid site id"}, 400
         try:
             hotel.save_hotel()
         except:
