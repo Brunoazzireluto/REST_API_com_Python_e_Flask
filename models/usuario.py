@@ -1,21 +1,31 @@
 from sql_alchemy import banco
+from flask import  request, url_for
 
 class User_model(banco.Model):
     __tablename__ = "Usuarios"
     
     user_id = banco.Column(banco.Integer, primary_key = True)
-    login = banco.Column(banco.String(40))   
-    senha = banco.Column(banco.String(40))
+    login = banco.Column(banco.String(40) nullable=False, unique=True)   
+    senha = banco.Column(banco.String(40) nullable=False)
+    email = banco.Column(banco.String(80) nullable=False, unique=True)
+    ativado = banco.Column(banco.Boolean, default=False)
     
-    def __init__(self, login, senha):
+    def __init__(self, login, senha, email, ativado):
         self.login = login
         self.senha = senha
+        self.email = email
+        self.ativado = ativado
+
+    def send_confirmation_email(self):
+        link = request.url_root[:-1] +url_for("userconfirm", user_id=self.user_id)
         
 
     def json(self):
         return {
             "user_id" : self.user_id,
-            "login" : self.login
+            "login" : self.login,
+            "email" : self.email,
+            "ativado": self.ativado
         }
         
     @classmethod
