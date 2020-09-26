@@ -1,13 +1,19 @@
 from sql_alchemy import banco
 from flask import  request, url_for
+from requests import post
+
+MAILGUN_DOMAIN = "sandbox4b50eb1415e242138cc902078a8251f4.mailgun.org"
+MAILGUN_API_KEY = "f6c52c8942d6085e6bbff4b82936751b-cb3791c4-4400f768"
+FROM_TITTLE = "confirmação"
+FROM_EMAIL = "no-reply@apihoteis.com"
 
 class User_model(banco.Model):
     __tablename__ = "Usuarios"
     
     user_id = banco.Column(banco.Integer, primary_key = True)
-    login = banco.Column(banco.String(40) nullable=False, unique=True)   
-    senha = banco.Column(banco.String(40) nullable=False)
-    email = banco.Column(banco.String(80) nullable=False, unique=True)
+    login = banco.Column(banco.String(40), nullable=False, unique=True)   
+    senha = banco.Column(banco.String(40), nullable=False)
+    email = banco.Column(banco.String(80), nullable=False, unique=True)
     ativado = banco.Column(banco.Boolean, default=False)
     
     def __init__(self, login, senha, email, ativado):
@@ -18,6 +24,16 @@ class User_model(banco.Model):
 
     def send_confirmation_email(self):
         link = request.url_root[:-1] +url_for("userconfirm", user_id=self.user_id)
+        return post("https://api.mailgun.net/v3/{}/messages".format(MAILGUN_DOMAIN),
+                    auth=("api", MAILGUN_API_KEY), 
+                    data={"from": "{} <{}>".format(FROM_TITTLE, FROM_EMAIL),
+                            "to": self.email,
+                            "subject" : "Confirmação de cadastro",
+                             "Text":"Confirme seu cadastro cliclando no linka seguir : {}".format(link),
+                             "html" :"<html><p>\
+                                 Confirme seu cadastro cliclando no linka seguir:<a href='{}'>Confirmar email</a>\
+                                     </p></html>".format(link)}
+                    )
         
 
     def json(self):
@@ -38,6 +54,13 @@ class User_model(banco.Model):
     @classmethod
     def find_by_login(cls, login):
         user = cls.query.filter_by(login=login).first() 
+        if user:
+            return user
+        return None
+
+    @classmethod
+    def find_by_email(cls, email):
+        user = cls.query.filter_by(email=email).first() 
         if user:
             return user
         return None

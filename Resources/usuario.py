@@ -3,11 +3,14 @@ from models.usuario import User_model
 from flask_jwt_extended import create_access_token, jwt_required, get_raw_jwt
 from werkzeug.security import safe_str_cmp
 from blacklist import BLACKLIST
+import traceback
+from flask import make_response, render_template
 
 
 atributos = reqparse.RequestParser()
 atributos.add_argument("login", type=str, required=True, help="the field 'login' cannot be left in blank")
 atributos.add_argument("senha", type=str, required=True, help="the field 'senha' cannot be left in blank")
+atributos.add_argument("email", type=str)
 atributos.add_argument("ativado", type=bool)
 
 class User(Resource):
@@ -35,13 +38,24 @@ class User_register(Resource):
     #/cadastro
     def post(self):       
         dados = atributos.parse_args()
+        if not dados.get("email") or dados.get("email") is None:
+            return {"Message": "The field 'email' Cannot be left blank" },400
+
+        if User_model.find_by_email(dados["email"]):
+            return {"Message" : "The email '{}' already exists".format(dados["email"])},400
 
         if User_model.find_by_login(dados["login"]):
-            return{"message" : "The login '{}' already exist." .format(dados["Login"])}
+            return{"message" : "The login '{}' already exist." .format(dados["Login"])}, 400
 
         user =  User_model(**dados)
         user.ativado = False
-        user.save_user()
+        try:
+            user.save_user()
+            user.send_confirmation_email()
+        except:
+            user.delete_user()
+            traceback.print_exc()
+            return {"Message":"A internal server erro has ocurred"},500    
         return{"Message" : "User Created successfully!"}, 201
 
 class UserLogin(Resource):
@@ -78,4 +92,5 @@ class UserConfirm(Resource):
     
         user.ativado = True
         user.save_user()
-        return{"Message":"User id '{}' confirme successfully.".format(user_id)},200
+        headers = {"Content-type":"text/html"}
+        return make_response(render_template("user_confirm.html", email=user.email, usuario=user.login),200, headers)
